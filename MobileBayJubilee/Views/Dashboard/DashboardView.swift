@@ -13,9 +13,11 @@ struct DashboardView: View {
     @State private var conditionData: ConditionData = .mockCurrent
     @State private var recentReports: [JubileeReport] = JubileeReport.mockReports.prefix(3).map { $0 }
     @State private var isRefreshing = false
+    @State private var showReportSubmission = false
 
     var body: some View {
         NavigationStack {
+            ZStack(alignment: .bottomTrailing) {
             ScrollView {
                 VStack(spacing: 24) {
                     // MARK: - Condition Score Section
@@ -37,8 +39,28 @@ struct DashboardView: View {
                     RecentReportsSection(reports: recentReports)
                         .padding(.horizontal)
 
-                    Spacer(minLength: 20)
+                    Spacer(minLength: 80)
                 }
+            }
+
+            // Floating Action Button
+            Button {
+                showReportSubmission = true
+            } label: {
+                HStack {
+                    Image(systemName: "plus")
+                        .font(.title3.bold())
+                    Text("Report Jubilee")
+                        .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .background(Color(red: 30/255, green: 64/255, blue: 175/255))
+                .foregroundColor(.white)
+                .clipShape(Capsule())
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+            }
+            .padding()
             }
             .refreshable {
                 await refreshData()
@@ -53,6 +75,9 @@ struct DashboardView: View {
                         Image(systemName: "gearshape")
                     }
                 }
+            }
+            .sheet(isPresented: $showReportSubmission) {
+                ReportSubmissionView()
             }
         }
     }
