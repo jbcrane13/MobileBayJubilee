@@ -421,11 +421,14 @@ project-root/
 3. Deploy agents → Parallel work
 4. `codereview` → Verify quality
 5. `debug` → Fix issues
-6. `precommit` → Final check
-7. Build + Screenshot → Verify
-8. Mark complete ✅
+6. Build + Screenshot → Verify
+7. **REQUIRED**: `precommit` → Validate before commit
+8. `git commit` → Only after precommit passes
+9. Mark complete ✅
 
-**Remember**: Nothing is complete until it builds, runs, and has screenshot proof! 📸
+**Remember**:
+- Nothing is complete until it builds, runs, and has screenshot proof! 📸
+- **NEVER commit without running `precommit` first!** 🚨
 
 ---
 

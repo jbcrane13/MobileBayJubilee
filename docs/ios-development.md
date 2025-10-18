@@ -20,6 +20,7 @@
 10. [Project Structure](#project-structure)
 11. [Common Patterns](#common-patterns)
 12. [Code Quality Checklist](#code-quality-checklist)
+13. [Git Commit Workflow](#git-commit-workflow)
 
 ---
 
@@ -887,6 +888,84 @@ Before delivering code, ensure:
 - ✅ Meaningful variable and function names
 - ✅ Proper separation of concerns
 - ✅ No memory leaks (avoid strong reference cycles)
+
+---
+
+## Git Commit Workflow
+
+**CRITICAL**: Every commit MUST follow this workflow:
+
+### Pre-Commit Validation (REQUIRED)
+
+Before creating any commit, **ALWAYS** run Zen MCP `precommit` tool to validate changes:
+
+```bash
+# 1. Stage your changes
+git add .
+
+# 2. Run precommit validation (via Zen MCP tool)
+# This validates:
+# - Git diffs and impacts
+# - Code quality issues
+# - Security concerns
+# - Test coverage
+# - Breaking changes
+# - Build verification
+
+# 3. Review precommit feedback
+# - Address any critical or high severity issues
+# - Fix bugs identified by analysis
+# - Add missing tests if flagged
+
+# 4. Only after precommit passes, create the commit.
+# This will open your default text editor to fill out the detailed message.
+git commit
+```
+
+### Commit Message Format
+
+Follow this structure for all commits:
+
+```
+Brief summary (imperative mood, 50 chars max)
+
+IMPLEMENTATION:
+- Feature/component details
+- Files created/modified
+- Architecture decisions
+
+FEATURES COMPLETE:
+✅ Feature 1 description
+✅ Feature 2 description
+
+BUG FIXES (if applicable):
+- Issue description and fix
+
+SPRINT PROGRESS: X/Y stories (Z%)
+
+Next: [Next priority task]
+
+Phase [X] - Month [Y] - Week [Z]
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### Validation Checklist
+
+Before every commit, verify:
+
+- ✅ **Zen precommit** validation passed
+- ✅ Code builds successfully (no errors or warnings)
+- ✅ All tests passing (if tests exist)
+- ✅ No sensitive data (API keys, credentials)
+- ✅ No debug code or console.log statements
+- ✅ Proper code formatting
+- ✅ Documentation updated (if API changed)
+- ✅ Commit message follows format
+
+**Never skip precommit validation** - it catches issues before they enter the codebase.
 
 ---
 
