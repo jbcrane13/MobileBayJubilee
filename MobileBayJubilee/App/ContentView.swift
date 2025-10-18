@@ -23,7 +23,7 @@ struct ContentView: View {
                 }
                 .tag(Tab.dashboard)
 
-            MapPlaceholderView()
+            MapView()
                 .tabItem {
                     Label("Map", systemImage: "map.fill")
                 }

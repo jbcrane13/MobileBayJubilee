@@ -81,12 +81,12 @@ struct DashboardView: View {
             windDirection: ["N", "NE", "E", "NW"].randomElement()!,
             temperature: Double.random(in: 76...82),
             tide: TidePhase.allCases.randomElement()!,
+            nextHighTide: Date().addingTimeInterval(6 * 3600),
+            nextLowTide: Date().addingTimeInterval(-2 * 3600),
             salinity: Double.random(in: 10...15),
             waterTemperature: Double.random(in: 80...85),
             dissolvedOxygen: Double.random(in: 6.0...7.5),
             alertLevel: newScore >= 80 ? .confirmed : (newScore >= 70 ? .watch : .none),
-            nextHighTide: Date().addingTimeInterval(6 * 3600),
-            nextLowTide: Date().addingTimeInterval(-2 * 3600),
             fetchedAt: Date()
         )
 
@@ -138,7 +138,7 @@ struct QuickStatsView: View {
 
     private var tideText: String {
         let now = Date()
-        if conditionData.nextLowTide > now {
+        if let nextLowTide = conditionData.nextLowTide, nextLowTide > now {
             return "Low"
         } else {
             return "High"
@@ -147,7 +147,14 @@ struct QuickStatsView: View {
 
     private var tideTime: String {
         let now = Date()
-        let nextTide = conditionData.nextLowTide > now ? conditionData.nextLowTide : conditionData.nextHighTide
+        let nextTide: Date
+        if let nextLowTide = conditionData.nextLowTide, nextLowTide > now {
+            nextTide = nextLowTide
+        } else if let nextHighTide = conditionData.nextHighTide {
+            nextTide = nextHighTide
+        } else {
+            nextTide = now
+        }
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: nextTide)

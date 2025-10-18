@@ -26,12 +26,12 @@ extension ConditionData {
             windDirection: "NNE",
             temperature: 78.5,
             tide: .low,
+            nextHighTide: Date().addingTimeInterval(6 * 3600), // 6 hours from now
+            nextLowTide: Date().addingTimeInterval(-2 * 3600), // 2 hours ago
             salinity: 12.3,
             waterTemperature: 82.1,
             dissolvedOxygen: 6.8,
             alertLevel: .watch,
-            nextHighTide: Date().addingTimeInterval(6 * 3600), // 6 hours from now
-            nextLowTide: Date().addingTimeInterval(-2 * 3600), // 2 hours ago
             fetchedAt: Date()
         )
     }
@@ -50,12 +50,12 @@ extension ConditionData {
             windDirection: "N",
             temperature: 80.2,
             tide: .rising,
+            nextHighTide: Date().addingTimeInterval(8 * 3600),
+            nextLowTide: Date().addingTimeInterval(-1 * 3600),
             salinity: 10.5,
             waterTemperature: 84.3,
             dissolvedOxygen: 7.2,
             alertLevel: .confirmed,
-            nextHighTide: Date().addingTimeInterval(8 * 3600),
-            nextLowTide: Date().addingTimeInterval(-1 * 3600),
             fetchedAt: Date()
         )
     }
@@ -74,12 +74,12 @@ extension ConditionData {
             windDirection: "S",
             temperature: 72.1,
             tide: .high,
+            nextHighTide: Date().addingTimeInterval(1 * 3600),
+            nextLowTide: Date().addingTimeInterval(7 * 3600),
             salinity: 28.4,
             waterTemperature: 75.2,
             dissolvedOxygen: 8.1,
             alertLevel: .none,
-            nextHighTide: Date().addingTimeInterval(1 * 3600),
-            nextLowTide: Date().addingTimeInterval(7 * 3600),
             fetchedAt: Date()
         )
     }
@@ -92,9 +92,10 @@ extension ConditionData {
                 seasonalScore: 20, timeWindowScore: 15, windScore: 12,
                 tideScore: 18, weatherPatternScore: 8, waterQualityScore: 2,
                 windSpeed: 3.2, windDirection: "NNE", temperature: 78.5,
-                tide: .low, salinity: 12.3, waterTemperature: 82.1,
-                dissolvedOxygen: 6.8, alertLevel: .watch,
+                tide: .low,
                 nextHighTide: Date(), nextLowTide: Date(),
+                salinity: 12.3, waterTemperature: 82.1,
+                dissolvedOxygen: 6.8, alertLevel: .watch,
                 fetchedAt: Date()
             ),
             ConditionData(
@@ -102,9 +103,10 @@ extension ConditionData {
                 seasonalScore: 18, timeWindowScore: 12, windScore: 10,
                 tideScore: 16, weatherPatternScore: 10, waterQualityScore: 2,
                 windSpeed: 4.5, windDirection: "NE", temperature: 77.2,
-                tide: .falling, salinity: 14.1, waterTemperature: 81.3,
-                dissolvedOxygen: 6.5, alertLevel: .none,
+                tide: .falling,
                 nextHighTide: Date(), nextLowTide: Date(),
+                salinity: 14.1, waterTemperature: 81.3,
+                dissolvedOxygen: 6.5, alertLevel: .none,
                 fetchedAt: Date().addingTimeInterval(-1800) // 30 min ago
             ),
             ConditionData(
@@ -112,9 +114,10 @@ extension ConditionData {
                 seasonalScore: 12, timeWindowScore: 8, windScore: 8,
                 tideScore: 10, weatherPatternScore: 5, waterQualityScore: 2,
                 windSpeed: 8.3, windDirection: "E", temperature: 75.8,
-                tide: .high, salinity: 22.5, waterTemperature: 79.1,
-                dissolvedOxygen: 7.2, alertLevel: .none,
+                tide: .high,
                 nextHighTide: Date(), nextLowTide: Date(),
+                salinity: 22.5, waterTemperature: 79.1,
+                dissolvedOxygen: 7.2, alertLevel: .none,
                 fetchedAt: Date().addingTimeInterval(-3600) // 1 hour ago
             )
         ]

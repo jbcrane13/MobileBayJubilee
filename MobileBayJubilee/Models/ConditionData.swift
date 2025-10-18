@@ -91,7 +91,7 @@ final class ConditionData {
 
 // MARK: - Tide Phase
 
-enum TidePhase: String, Codable {
+enum TidePhase: String, Codable, CaseIterable {
     case rising = "Rising"
     case high = "High"
     case falling = "Falling"
