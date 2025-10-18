@@ -17,7 +17,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardPlaceholderView()
+            DashboardView()
                 .tabItem {
                     Label("Dashboard", systemImage: "gauge.with.dots.needle.bottom.50percent")
                 }
