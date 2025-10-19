@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		25FFBA752EA46BCA0066A6F6 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA742EA46BCA0066A6F6 /* FirebaseAuth */; };
+		25FFBA772EA46BCA0066A6F6 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA762EA46BCA0066A6F6 /* FirebaseFirestore */; };
+		25FFBA792EA46BCA0066A6F6 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA782EA46BCA0066A6F6 /* FirebaseMessaging */; };
+		25FFBA7B2EA46BCA0066A6F6 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA7A2EA46BCA0066A6F6 /* FirebaseStorage */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		25FFBA1D2EA382840066A6F6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +59,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25FFBA792EA46BCA0066A6F6 /* FirebaseMessaging in Frameworks */,
+				25FFBA7B2EA46BCA0066A6F6 /* FirebaseStorage in Frameworks */,
+				25FFBA752EA46BCA0066A6F6 /* FirebaseAuth in Frameworks */,
+				25FFBA772EA46BCA0066A6F6 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +123,10 @@
 			);
 			name = MobileBayJubilee;
 			packageProductDependencies = (
+				25FFBA742EA46BCA0066A6F6 /* FirebaseAuth */,
+				25FFBA762EA46BCA0066A6F6 /* FirebaseFirestore */,
+				25FFBA782EA46BCA0066A6F6 /* FirebaseMessaging */,
+				25FFBA7A2EA46BCA0066A6F6 /* FirebaseStorage */,
 			);
 			productName = MobileBayJubilee;
 			productReference = 25FFBA0D2EA382840066A6F6 /* MobileBayJubilee.app */;
@@ -195,6 +210,9 @@
 			);
 			mainGroup = 25FFBA042EA382840066A6F6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 25FFBA0E2EA382840066A6F6 /* Products */;
 			projectDirPath = "";
@@ -586,6 +604,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		25FFBA742EA46BCA0066A6F6 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		25FFBA762EA46BCA0066A6F6 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		25FFBA782EA46BCA0066A6F6 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		25FFBA7A2EA46BCA0066A6F6 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 25FFBA052EA382840066A6F6 /* Project object */;
 }

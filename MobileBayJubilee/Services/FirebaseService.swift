@@ -119,8 +119,9 @@ class MockFirebaseService: FirebaseServiceProtocol {
 /// Switch between mock and real implementation here
 class FirebaseServiceManager {
     /// Current service instance (Mock or Real)
-    /// Change to RealFirebaseService() when Firebase project is ready
-    static let shared: FirebaseServiceProtocol = MockFirebaseService.shared
+    /// Using RealFirebaseService for production Firebase integration
+    /// To use mock data for testing, change to: MockFirebaseService.shared
+    static let shared: FirebaseServiceProtocol = RealFirebaseService.shared
 }
 
 // MARK: - TODO: Real Firebase Service Implementation

@@ -9,9 +9,17 @@
 
 import SwiftUI
 import SwiftData
+import FirebaseCore
 
 @main
 struct MobileBayJubileeApp: App {
+    // MARK: - Initialization
+
+    init() {
+        // Configure Firebase
+        FirebaseApp.configure()
+    }
+
     // MARK: - SwiftData Model Container
 
     var sharedModelContainer: ModelContainer = {
