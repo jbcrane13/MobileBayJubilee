@@ -12,60 +12,102 @@ struct CommunityView: View {
     @State private var reports: [JubileeReport] = JubileeReport.mockReports
     @State private var selectedFilter: ReportFilter = .all
     @State private var isRefreshing = false
+    @State private var selectedTab: CommunityTab = .feed
+    @State private var activeChatRooms: [String] = [] // Active chat room IDs
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // MARK: - Filter Tabs
-                    FilterTabsView(selectedFilter: $selectedFilter)
-                        .padding(.horizontal)
-
-                    // MARK: - Reports Feed
-                    LazyVStack(spacing: 16) {
-                        ForEach(filteredReports) { report in
-                            CommunityReportCard(report: report)
-                                .padding(.horizontal)
-                        }
-                    }
-                    .padding(.vertical)
-
-                    if filteredReports.isEmpty {
-                        EmptyCommunityView(filter: selectedFilter)
-                            .padding(.top, 60)
+            VStack(spacing: 0) {
+                // MARK: - Tab Selector
+                Picker("Community Section", selection: $selectedTab) {
+                    ForEach(CommunityTab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
                     }
                 }
-            }
-            .refreshable {
-                await refreshFeed()
+                .pickerStyle(.segmented)
+                .padding()
+
+                // MARK: - Content
+                Group {
+                    if selectedTab == .feed {
+                        feedView
+                    } else {
+                        chatListView
+                    }
+                }
             }
             .navigationTitle("Community")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button {
-                            selectedFilter = .all
-                        } label: {
-                            Label("All Reports", systemImage: "list.bullet")
-                        }
+        }
+    }
 
-                        Button {
-                            selectedFilter = .verified
-                        } label: {
-                            Label("Verified Only", systemImage: "checkmark.seal.fill")
-                        }
+    // MARK: - Feed View
 
-                        Button {
-                            selectedFilter = .today
-                        } label: {
-                            Label("Today", systemImage: "calendar")
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
+    private var feedView: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                // MARK: - Filter Tabs
+                FilterTabsView(selectedFilter: $selectedFilter)
+                    .padding(.horizontal)
+
+                // MARK: - Reports Feed
+                LazyVStack(spacing: 16) {
+                    ForEach(filteredReports) { report in
+                        CommunityReportCard(report: report)
+                            .padding(.horizontal)
                     }
                 }
+                .padding(.vertical)
+
+                if filteredReports.isEmpty {
+                    EmptyCommunityView(filter: selectedFilter)
+                        .padding(.top, 60)
+                }
             }
+        }
+        .refreshable {
+            await refreshFeed()
+        }
+    }
+
+    // MARK: - Chat List View
+
+    private var chatListView: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                if activeChatRooms.isEmpty {
+                    // Empty state
+                    VStack(spacing: 16) {
+                        Image(systemName: "bubble.left.and.bubble.right")
+                            .font(.system(size: 48))
+                            .foregroundColor(.secondary)
+
+                        Text("No Active Chats")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        Text("Chat rooms are created automatically when jubilees are confirmed")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 100)
+                } else {
+                    // Active chat rooms
+                    ForEach(activeChatRooms, id: \.self) { roomId in
+                        NavigationLink {
+                            ChatView(roomId: roomId, roomTitle: formatRoomTitle(roomId))
+                        } label: {
+                            ChatRoomCard(roomId: roomId)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            .padding(.vertical)
         }
     }
 
@@ -96,6 +138,23 @@ struct CommunityView: View {
         // TODO: Fetch from Firebase
         isRefreshing = false
     }
+
+    private func formatRoomTitle(_ roomId: String) -> String {
+        // Parse room ID like "point-clear-jubilee-2025-08-15-0234"
+        let components = roomId.split(separator: "-")
+        if components.count >= 2 {
+            let location = components[0...1].joined(separator: " ").capitalized
+            return "\(location) Chat"
+        }
+        return "Event Chat"
+    }
+}
+
+// MARK: - Community Tab
+
+enum CommunityTab: String, CaseIterable {
+    case feed = "Feed"
+    case chat = "Live Chat"
 }
 
 // MARK: - Report Filter
@@ -373,6 +432,54 @@ struct EmptyCommunityView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(40)
+    }
+}
+
+// MARK: - Chat Room Card
+
+struct ChatRoomCard: View {
+    let roomId: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Icon
+            Circle()
+                .fill(Color.appPrimary.opacity(0.2))
+                .frame(width: 50, height: 50)
+                .overlay {
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.title3)
+                        .foregroundColor(.appPrimary)
+                }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(formatRoomName(roomId))
+                    .font(.headline)
+                    .foregroundColor(.primary)
+
+                Text("Active now")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+
+    private func formatRoomName(_ roomId: String) -> String {
+        let components = roomId.split(separator: "-")
+        if components.count >= 2 {
+            return components[0...1].joined(separator: " ").capitalized
+        }
+        return "Event Chat"
     }
 }
 

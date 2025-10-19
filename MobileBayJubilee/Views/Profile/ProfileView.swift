@@ -57,6 +57,7 @@ struct ProfileView: View {
 
 struct SignedInProfileView: View {
     @ObservedObject var authManager: AuthenticationManager
+    @StateObject private var reputationManager = ReputationManager.shared
     @Binding var notificationsEnabled: Bool
     @Binding var notificationThreshold: Double
 
@@ -86,12 +87,19 @@ struct SignedInProfileView: View {
 
                 // Reputation badge
                 HStack(spacing: 8) {
-                    Image(systemName: "star.fill")
+                    Image(systemName: reputationManager.getReputationStats().icon)
                         .foregroundColor(.yellow)
 
-                    Text("50 Reputation") // TODO: Replace with actual reputation
+                    Text("\(reputationManager.currentUserReputation) Reputation")
                         .font(.subheadline)
                         .fontWeight(.medium)
+
+                    Text("•")
+                        .foregroundColor(.secondary)
+
+                    Text(reputationManager.currentUserBadge)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)

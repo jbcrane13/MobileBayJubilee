@@ -10,6 +10,8 @@ import Foundation
 import FirebaseCore
 import FirebaseFirestore
 import FirebaseAuth
+// import FirebaseDatabase // TODO: Add when implementing real-time chat
+import CoreLocation
 import CryptoKit
 
 // MARK: - Firestore Data Models
@@ -135,6 +137,8 @@ class RealFirebaseService: FirebaseServiceProtocol {
 
     private let db = Firestore.firestore()
     private let auth = Auth.auth()
+    // TODO: Uncomment when Firebase Realtime Database is added
+    // private let realtimeDb = Database.database().reference()
 
     // MARK: - Singleton
 
@@ -226,14 +230,12 @@ class RealFirebaseService: FirebaseServiceProtocol {
         try await db.collection("reports").addDocument(data: reportData)
     }
 
-    func verifyReport(reportId: UUID) async throws {
-        guard auth.currentUser != nil else {
+    func verifyReport(reportId: UUID, userId: UUID, isPositive: Bool) async throws {
+        guard let currentUserId = auth.currentUser?.uid else {
             throw FirebaseError.unauthorized
         }
 
-        // Note: In production, you should track which users verified which reports
-        // to prevent duplicate verifications
-
+        // Fetch the report to get its location
         let reportQuery = try await db.collection("reports")
             .whereField("id", isEqualTo: reportId.uuidString)
             .getDocuments()
@@ -242,10 +244,53 @@ class RealFirebaseService: FirebaseServiceProtocol {
             throw FirebaseError.noData
         }
 
-        try await reportDoc.reference.updateData([
-            "verifications": FieldValue.increment(Int64(1)),
-            "isVerified": true // Mark as verified (boolean, not timestamp)
+        let reportData = reportDoc.data()
+        guard let reportLat = reportData["latitude"] as? Double,
+              let reportLon = reportData["longitude"] as? Double else {
+            throw FirebaseError.noData
+        }
+
+        // Check if user has a current location within 2 miles
+        // Note: In production, you'd pass the user's current location as a parameter
+        // For now, we'll add a verification tracking system
+
+        // Track verification in sub-collection to prevent duplicates
+        let verificationRef = reportDoc.reference.collection("verifications").document(currentUserId)
+
+        do {
+            let verificationDoc = try await verificationRef.getDocument()
+            if verificationDoc.exists {
+                // User already verified this report
+                throw FirebaseError.duplicateVerification
+            }
+        } catch {
+            // Document doesn't exist, proceed with verification
+        }
+
+        // Add verification tracking
+        try await verificationRef.setData([
+            "userId": currentUserId,
+            "verifiedAt": Timestamp(date: Date()),
+            "isPositive": isPositive
         ])
+
+        // Update verification count
+        let increment = isPositive ? 1 : -1
+        try await reportDoc.reference.updateData([
+            "verifications": FieldValue.increment(Int64(increment)),
+            "isVerified": true
+        ])
+    }
+
+    /// Check if user is within specified radius of report location (in miles)
+    func isUserNearReport(reportLocation: CLLocationCoordinate2D, userLocation: CLLocationCoordinate2D, radiusMiles: Double = 2.0) -> Bool {
+        let reportCLLocation = CLLocation(latitude: reportLocation.latitude, longitude: reportLocation.longitude)
+        let userCLLocation = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
+
+        let distanceMeters = userCLLocation.distance(from: reportCLLocation)
+        let distanceMiles = distanceMeters / 1609.34 // Convert meters to miles
+
+        return distanceMiles <= radiusMiles
     }
 
     // MARK: - User Management
@@ -346,6 +391,60 @@ class RealFirebaseService: FirebaseServiceProtocol {
 
                 callback(reports)
             }
+    }
+
+    // MARK: - Chat Methods (Firebase Realtime Database)
+
+    /// Create a chat room for an event
+    func createChatRoom(for event: String, location: String) -> String {
+        let roomId = ChatRoom.createRoomId(for: event, location: location)
+
+        let roomData: [String: Any] = [
+            "id": roomId,
+            "eventLocation": location,
+            "eventDate": Date().timeIntervalSince1970,
+            "isActive": true,
+            "participantCount": 0,
+            "lastMessageAt": Date().timeIntervalSince1970
+        ]
+
+        // TODO: Uncomment when Firebase Realtime Database is added
+        // realtimeDb.child("chatRooms").child(roomId).setValue(roomData)
+
+        print("📝 Chat room created (stub): \(roomId)")
+        return roomId
+    }
+
+    /// Send a chat message to a room
+    func sendChatMessage(to roomId: String, message: String) async throws {
+        // TODO: Implement when Firebase Realtime Database is added
+        print("💬 Chat message sent (stub): \(message)")
+    }
+
+    /// Observe chat messages for a room in real-time
+    func observeChatMessages(roomId: String, callback: @escaping ([ChatMessage]) -> Void) {
+        // TODO: Implement when Firebase Realtime Database is added
+        print("💬 Observing chat messages (stub) for room: \(roomId)")
+        // Return empty messages for now
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            callback([])
+        }
+    }
+
+    /// Stop observing chat messages
+    func stopObservingChatMessages(roomId: String) {
+        // TODO: Implement when Firebase Realtime Database is added
+        print("💬 Stopped observing chat messages (stub) for room: \(roomId)")
+    }
+}
+
+// MARK: - Firebase Errors Extension
+
+extension FirebaseError {
+    static let duplicateVerification = FirebaseError.custom("You have already verified this report")
+
+    static func custom(_ message: String) -> FirebaseError {
+        return FirebaseError.noData // Placeholder; extend enum if needed
     }
 }
 

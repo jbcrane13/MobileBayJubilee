@@ -8,18 +8,26 @@
 
 import SwiftUI
 import MapKit
+import CoreLocation
 
 struct MapView: View {
     // TODO: Replace with @Query from SwiftData when Firebase integration complete
     @State private var reports: [JubileeReport] = JubileeReport.mockReports
     @State private var selectedReport: JubileeReport?
     @State private var showReportDetail = false
+    @State private var userLocation: CLLocationCoordinate2D?
+    @State private var showVerificationAlert = false
+    @State private var verificationMessage = ""
+    @State private var isVerifying = false
     @State private var cameraPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 30.4955, longitude: -87.9064), // Mobile Bay center
             span: MKCoordinateSpan(latitudeDelta: 0.3, longitudeDelta: 0.3)
         )
     )
+
+    private let firebaseService = RealFirebaseService.shared
+    private let locationManager = CLLocationManager()
 
     var body: some View {
         NavigationStack {
@@ -50,10 +58,17 @@ struct MapView: View {
 
                 // MARK: - Report Detail Sheet
                 if showReportDetail, let report = selectedReport {
-                    ReportDetailCard(report: report, onClose: {
-                        showReportDetail = false
-                        selectedReport = nil
-                    })
+                    ReportDetailCard(
+                        report: report,
+                        userLocation: userLocation,
+                        onClose: {
+                            showReportDetail = false
+                            selectedReport = nil
+                        },
+                        onVerify: { isPositive in
+                            verifyReport(report, isPositive: isPositive)
+                        }
+                    )
                     .transition(.move(edge: .bottom))
                     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showReportDetail)
                 }
@@ -91,6 +106,67 @@ struct MapView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                     }
+                }
+            }
+            .alert("Verification", isPresented: $showVerificationAlert) {
+                Button("OK") {
+                    showVerificationAlert = false
+                }
+            } message: {
+                Text(verificationMessage)
+            }
+            .onAppear {
+                requestLocationPermission()
+            }
+        }
+    }
+
+    // MARK: - Methods
+
+    private func requestLocationPermission() {
+        locationManager.requestWhenInUseAuthorization()
+        if let location = locationManager.location {
+            userLocation = location.coordinate
+        }
+    }
+
+    private func verifyReport(_ report: JubileeReport, isPositive: Bool) {
+        guard let userLoc = userLocation else {
+            verificationMessage = "Unable to determine your location. Please enable location services."
+            showVerificationAlert = true
+            return
+        }
+
+        let reportCoordinate = CLLocationCoordinate2D(latitude: report.latitude, longitude: report.longitude)
+
+        // Check if user is within 2 miles
+        guard firebaseService.isUserNearReport(reportLocation: reportCoordinate, userLocation: userLoc, radiusMiles: 2.0) else {
+            verificationMessage = "You must be within 2 miles of the report location to verify it."
+            showVerificationAlert = true
+            return
+        }
+
+        // Proceed with verification
+        isVerifying = true
+
+        Task {
+            do {
+                // Mock user ID - in production, get from Auth
+                let userId = UUID()
+                try await firebaseService.verifyReport(reportId: report.id, userId: userId, isPositive: isPositive)
+
+                await MainActor.run {
+                    isVerifying = false
+                    verificationMessage = isPositive ? "Thank you for verifying this report!" : "Thank you for your feedback."
+                    showVerificationAlert = true
+                    showReportDetail = false
+                    selectedReport = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isVerifying = false
+                    verificationMessage = "Failed to verify report: \(error.localizedDescription)"
+                    showVerificationAlert = true
                 }
             }
         }
@@ -164,7 +240,15 @@ struct Triangle: Shape {
 
 struct ReportDetailCard: View {
     let report: JubileeReport
+    let userLocation: CLLocationCoordinate2D?
     let onClose: () -> Void
+    let onVerify: (Bool) -> Void
+
+    private var isWithinVerificationRange: Bool {
+        guard let userLoc = userLocation else { return false }
+        let reportLoc = CLLocationCoordinate2D(latitude: report.latitude, longitude: report.longitude)
+        return RealFirebaseService.shared.isUserNearReport(reportLocation: reportLoc, userLocation: userLoc, radiusMiles: 2.0)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -263,28 +347,62 @@ struct ReportDetailCard: View {
             }
 
             // MARK: - Actions
-            HStack(spacing: 12) {
-                Button {
-                    // TODO: Navigate to directions
-                } label: {
-                    Label("Directions", systemImage: "arrow.triangle.turn.up.right.circle.fill")
+            VStack(spacing: 12) {
+                // Verify buttons (only show if within range)
+                if isWithinVerificationRange {
+                    HStack(spacing: 12) {
+                        Button {
+                            onVerify(true)
+                        } label: {
+                            Label("Verify (Thumbs Up)", systemImage: "hand.thumbsup.fill")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.green)
+                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+
+                        Button {
+                            onVerify(false)
+                        } label: {
+                            Label("Dispute", systemImage: "hand.thumbsdown.fill")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.orange)
+                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+
+                    Text("You're within 2 miles - verify this report")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(red: 30/255, green: 64/255, blue: 175/255)) // Jubilee Blue
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else {
+                    HStack(spacing: 8) {
+                        Image(systemName: "location.slash")
+                            .foregroundColor(.secondary)
+
+                        Text("Verification available within 2 miles")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
-                Button {
-                    // TODO: Verify report
-                } label: {
-                    Label("Verify", systemImage: "checkmark.circle.fill")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(.systemGray5))
-                        .foregroundColor(.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                // Verification count display
+                HStack {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundColor(report.isVerified ? .green : .gray)
+
+                    Text("\(report.verifications) verification\(report.verifications == 1 ? "" : "s")")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
+                .frame(maxWidth: .infinity)
             }
         }
         .padding()

@@ -22,7 +22,7 @@ protocol FirebaseServiceProtocol {
     func fetchRecentReports(limit: Int) async throws -> [JubileeReport]
     func fetchAllReports() async throws -> [JubileeReport]
     func submitReport(_ report: JubileeReport) async throws
-    func verifyReport(reportId: UUID) async throws
+    func verifyReport(reportId: UUID, userId: UUID, isPositive: Bool) async throws
 
     // MARK: - User Management
     func fetchCurrentUser() async throws -> User?
@@ -31,6 +31,12 @@ protocol FirebaseServiceProtocol {
     // MARK: - Real-time Updates
     func observeConditionUpdates(callback: @escaping (ConditionData) -> Void)
     func observeReportUpdates(callback: @escaping ([JubileeReport]) -> Void)
+
+    // MARK: - Chat Methods
+    func createChatRoom(for event: String, location: String) -> String
+    func sendChatMessage(to roomId: String, message: String) async throws
+    func observeChatMessages(roomId: String, callback: @escaping ([ChatMessage]) -> Void)
+    func stopObservingChatMessages(roomId: String)
 }
 
 // MARK: - Mock Firebase Service (for development)
@@ -74,10 +80,10 @@ class MockFirebaseService: FirebaseServiceProtocol {
         print("📝 Mock: Report submitted - \(report.reportType.rawValue) at \(report.locationName)")
     }
 
-    func verifyReport(reportId: UUID) async throws {
+    func verifyReport(reportId: UUID, userId: UUID, isPositive: Bool) async throws {
         try? await Task.sleep(nanoseconds: 500_000_000)
         // TODO: In real implementation, increment verification count in Firestore
-        print("✅ Mock: Report verified - \(reportId)")
+        print("✅ Mock: Report \(isPositive ? "verified" : "disputed") - \(reportId) by user \(userId)")
     }
 
     // MARK: - User Management
@@ -110,6 +116,33 @@ class MockFirebaseService: FirebaseServiceProtocol {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             callback(JubileeReport.mockReports)
         }
+    }
+
+    // MARK: - Chat Methods
+
+    func createChatRoom(for event: String, location: String) -> String {
+        let roomId = ChatRoom.createRoomId(for: event, location: location)
+        print("💬 Mock: Chat room created - \(roomId)")
+        return roomId
+    }
+
+    func sendChatMessage(to roomId: String, message: String) async throws {
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        // TODO: In real implementation, send to Realtime Database
+        print("💬 Mock: Chat message sent to room \(roomId): \(message)")
+    }
+
+    func observeChatMessages(roomId: String, callback: @escaping ([ChatMessage]) -> Void) {
+        // TODO: In real implementation, set up Realtime Database listener
+        // For now, just call callback once with empty array
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            callback([])
+        }
+    }
+
+    func stopObservingChatMessages(roomId: String) {
+        // TODO: In real implementation, remove Realtime Database listener
+        print("💬 Mock: Stopped observing chat messages for room \(roomId)")
     }
 }
 
