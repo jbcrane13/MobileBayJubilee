@@ -11,6 +11,7 @@
 		25FFBA772EA46BCA0066A6F6 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA762EA46BCA0066A6F6 /* FirebaseFirestore */; };
 		25FFBA792EA46BCA0066A6F6 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA782EA46BCA0066A6F6 /* FirebaseMessaging */; };
 		25FFBA7B2EA46BCA0066A6F6 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA7A2EA46BCA0066A6F6 /* FirebaseStorage */; };
+		25FFBA812EA48A8E0066A6F6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 25FFBA802EA48A8E0066A6F6 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +35,7 @@
 		25FFBA0D2EA382840066A6F6 /* MobileBayJubilee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MobileBayJubilee.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FFBA1C2EA382840066A6F6 /* MobileBayJubileeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MobileBayJubileeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FFBA262EA382850066A6F6 /* MobileBayJubileeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MobileBayJubileeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		25FFBA802EA48A8E0066A6F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -90,6 +92,7 @@
 				25FFBA1F2EA382840066A6F6 /* MobileBayJubileeTests */,
 				25FFBA292EA382850066A6F6 /* MobileBayJubileeUITests */,
 				25FFBA0E2EA382840066A6F6 /* Products */,
+				25FFBA802EA48A8E0066A6F6 /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -230,6 +233,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25FFBA812EA48A8E0066A6F6 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -415,6 +419,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MobileBayJubilee/MobileBayJubilee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 32XZRDTGK3;
@@ -432,6 +437,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = "-2XZRDTGK3.MobileBayJubilee";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -449,6 +455,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MobileBayJubilee/MobileBayJubilee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 32XZRDTGK3;
@@ -466,6 +473,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = "-2XZRDTGK3.MobileBayJubilee";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

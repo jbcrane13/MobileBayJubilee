@@ -7,9 +7,10 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct ProfileView: View {
-    @State private var isSignedIn = false
+    @StateObject private var authManager = AuthenticationManager.shared
     @State private var notificationsEnabled = true
     @State private var notificationThreshold = 70.0
     @State private var showingSettings = false
@@ -18,15 +19,16 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    if isSignedIn {
+                    if authManager.isAuthenticated {
                         // Signed In State
                         SignedInProfileView(
+                            authManager: authManager,
                             notificationsEnabled: $notificationsEnabled,
                             notificationThreshold: $notificationThreshold
                         )
                     } else {
                         // Sign In Prompt
-                        SignInPromptView(isSignedIn: $isSignedIn)
+                        SignInPromptView(authManager: authManager)
                     }
                 }
                 .padding()
@@ -34,7 +36,7 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                if isSignedIn {
+                if authManager.isAuthenticated {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
                             showingSettings = true
@@ -54,6 +56,7 @@ struct ProfileView: View {
 // MARK: - Signed In Profile View
 
 struct SignedInProfileView: View {
+    @ObservedObject var authManager: AuthenticationManager
     @Binding var notificationsEnabled: Bool
     @Binding var notificationThreshold: Double
 
@@ -72,11 +75,11 @@ struct SignedInProfileView: View {
                     }
 
                 VStack(spacing: 4) {
-                    Text("Jubilee Watcher") // TODO: Replace with actual user name
+                    Text(authManager.user?.displayName ?? "Jubilee Watcher")
                         .font(.title2)
                         .fontWeight(.bold)
 
-                    Text("member@example.com") // TODO: Replace with actual email
+                    Text(authManager.user?.email ?? "member@example.com")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -184,7 +187,7 @@ struct SignedInProfileView: View {
                     }
 
                     Button(role: .destructive) {
-                        // TODO: Sign out
+                        try? authManager.signOut()
                     } label: {
                         HStack {
                             Image(systemName: "arrow.right.square.fill")
@@ -267,7 +270,8 @@ struct ProfileActionRow: View {
 // MARK: - Sign In Prompt View
 
 struct SignInPromptView: View {
-    @Binding var isSignedIn: Bool
+    @ObservedObject var authManager: AuthenticationManager
+    @State private var showingEmailSignIn = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -288,11 +292,18 @@ struct SignInPromptView: View {
                     .padding(.horizontal)
             }
 
+            // Error message
+            if let errorMessage = authManager.errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal)
+            }
+
             VStack(spacing: 12) {
                 // Sign in with Apple
                 Button {
-                    // TODO: Implement Sign in with Apple
-                    isSignedIn = true // Temporary for development
+                    authManager.signInWithApple()
                 } label: {
                     HStack {
                         Image(systemName: "applelogo")
@@ -305,11 +316,11 @@ struct SignInPromptView: View {
                     .foregroundColor(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
+                .disabled(authManager.isLoading)
 
                 // Email sign in
                 Button {
-                    // TODO: Implement Email sign in
-                    isSignedIn = true // Temporary for development
+                    showingEmailSignIn = true
                 } label: {
                     HStack {
                         Image(systemName: "envelope.fill")
@@ -322,8 +333,12 @@ struct SignInPromptView: View {
                     .foregroundColor(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
+                .disabled(authManager.isLoading)
             }
             .padding(.horizontal)
+            .sheet(isPresented: $showingEmailSignIn) {
+                EmailSignInView(authManager: authManager)
+            }
 
             // Browse without signing in
             Button {
@@ -427,6 +442,119 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Email Sign In View
+
+struct EmailSignInView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var authManager: AuthenticationManager
+
+    @State private var email = ""
+    @State private var password = ""
+    @State private var displayName = ""
+    @State private var isSignUp = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("Mode", selection: $isSignUp) {
+                        Text("Sign In").tag(false)
+                        Text("Sign Up").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Authentication Mode")
+                }
+
+                Section {
+                    if isSignUp {
+                        TextField("Display Name", text: $displayName)
+                            .textContentType(.name)
+                            .autocapitalization(.words)
+                    }
+
+                    TextField("Email", text: $email)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+
+                    SecureField("Password", text: $password)
+                        .textContentType(isSignUp ? .newPassword : .password)
+                } header: {
+                    Text(isSignUp ? "Create Account" : "Sign In")
+                }
+
+                if let errorMessage = authManager.errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+
+                Section {
+                    Button {
+                        Task {
+                            do {
+                                if isSignUp {
+                                    try await authManager.signUp(
+                                        email: email,
+                                        password: password,
+                                        displayName: displayName
+                                    )
+                                } else {
+                                    try await authManager.signIn(
+                                        email: email,
+                                        password: password
+                                    )
+                                }
+                                dismiss()
+                            } catch {
+                                // Error is already set in authManager
+                            }
+                        }
+                    } label: {
+                        if authManager.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text(isSignUp ? "Create Account" : "Sign In")
+                                .frame(maxWidth: .infinity)
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .disabled(authManager.isLoading || email.isEmpty || password.isEmpty || (isSignUp && displayName.isEmpty))
+                }
+
+                if !isSignUp {
+                    Section {
+                        Button("Forgot Password?") {
+                            Task {
+                                do {
+                                    try await authManager.resetPassword(email: email)
+                                    // Show success message
+                                } catch {
+                                    // Error is already set in authManager
+                                }
+                            }
+                        }
+                        .disabled(email.isEmpty || authManager.isLoading)
+                    }
+                }
+            }
+            .navigationTitle(isSignUp ? "Create Account" : "Sign In")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
