@@ -124,9 +124,69 @@ struct ReportSubmissionView: View {
     // MARK: - Methods
 
     private func submitReport() {
-        // TODO: Submit to Firebase
-        // For now, just dismiss
-        dismiss()
+        guard let location = selectedLocation else {
+            print("❌ Cannot submit report without location")
+            return
+        }
+
+        // Create report object
+        let report = JubileeReport(
+            reportType: reportType,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            locationName: locationName,
+            species: Array(selectedSpecies),
+            intensity: intensity,
+            reportDescription: reportDescription.isEmpty ? nil : reportDescription,
+            photoURLs: [], // No photo support yet
+            verifications: 0,
+            isVerified: false,
+            reportedAt: Date(),
+            createdAt: Date(),
+            author: nil // Will be set by Firebase when we have auth
+        )
+
+        // Submit to Firebase and trigger notifications
+        Task {
+            do {
+                // Submit report to Firebase
+                let firebaseService = RealFirebaseService.shared
+                try await firebaseService.submitReport(report)
+                print("✅ Report submitted successfully")
+
+                // Check if immediate notification should be triggered
+                let alertManager = AlertLevelManager.shared
+                let notificationManager = NotificationManager.shared
+
+                // For full jubilee or early warning from any user, send notification
+                // (In production, this would check user reputation)
+                if report.reportType == .fullJubilee || report.reportType == .earlyWarning {
+                    let alertType: CommunityAlertType = report.reportType == .fullJubilee ? .confirmed : .watch
+                    let title = report.reportType == .fullJubilee ? "Jubilee Alert: CONFIRMED" : "Jubilee Watch"
+                    let body = "Jubilee event reported at \(report.locationName). Check the map for details."
+
+                    try await notificationManager.scheduleCommunityAlert(
+                        title: title,
+                        body: body,
+                        alertType: alertType,
+                        reportId: report.id,
+                        timeInterval: 1 // Send immediately (1 second delay)
+                    )
+                    print("✅ Notification scheduled for report")
+                }
+
+                await MainActor.run {
+                    dismiss()
+                }
+
+            } catch {
+                print("❌ Failed to submit report: \(error.localizedDescription)")
+                // TODO: Show error alert to user
+                await MainActor.run {
+                    dismiss()
+                }
+            }
+        }
     }
 }
 
