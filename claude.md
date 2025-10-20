@@ -18,12 +18,80 @@ This documentation provides a complete, phase-based development workflow for AI 
 
 ---
 
+## 🚨 CRITICAL QUALITY GATES 🚨
+
+**MANDATORY READING**: Every session MUST start with [SESSION-START-CHECKLIST.md](./SESSION-START-CHECKLIST.md)
+
+### BEFORE EVERY COMMIT (NO EXCEPTIONS)
+
+**Required Sequence**:
+```
+1. Code Change
+2. Build Verification (xcodebuild succeeds, zero errors/warnings)
+3. Precommit Validation (mcp__zen__precommit)
+4. Code Review (mcp__zen__codereview for complex changes)
+5. ONLY THEN: git commit + git push
+```
+
+**Quality Gate Rules**:
+- ✅ `mcp__zen__precommit` MUST run before EVERY commit
+- ✅ `mcp__zen__codereview` MUST run for significant code changes (>50 lines, complex logic, new features)
+- ✅ Build MUST succeed with zero errors and zero warnings
+- ✅ Screenshot evidence REQUIRED for UI changes
+- ✅ Test evidence REQUIRED for logic changes
+
+**Violation = Process Failure**
+
+### BEFORE MARKING TASKS COMPLETE
+
+**Completion Checklist**:
+- ✅ Feature works as specified
+- ✅ Screenshot evidence provided (for UI changes)
+- ✅ Tests passing (unit + integration)
+- ✅ Code reviewed (Zen `codereview` for complex changes)
+- ✅ Build succeeds (zero errors/warnings)
+- ✅ Quality gates logged in `tracking/quality-gates-log.md`
+
+**Nothing is complete until ALL gates pass.**
+
+### TODO STRUCTURE WITH QUALITY GATES
+
+**CORRECT** (quality gates are explicit):
+```markdown
+- [ ] Complete feature X implementation
+- [ ] Run precommit validation for feature X
+- [ ] Run codereview for feature X (if complex)
+- [ ] Commit feature X (blocked until validations pass)
+- [ ] Capture screenshot evidence (if UI change)
+```
+
+**INCORRECT** (quality gates missing):
+```markdown
+- [ ] Implement and commit feature X
+```
+
+**Always break commits into multiple todo items with explicit quality gates.**
+
+### TRACKING COMPLIANCE
+
+**Required Documents**:
+- `SESSION-START-CHECKLIST.md` - Read at start of EVERY session
+- `tracking/quality-gates-log.md` - Update after EVERY commit
+- `tracking/phase-status.md` - Update at end of sprint
+
+**Compliance Target**: 100% quality gate adherence
+
+**Current Status**: See `tracking/quality-gates-log.md`
+
+---
+
 ## 📚 Documentation Structure
 
 ### Core Workflow Documents
 
 | Document | Purpose | When to Use |
 |----------|---------|-------------|
+| **[Session Start Checklist](./SESSION-START-CHECKLIST.md)** | **Mandatory session startup protocol** | **Start of EVERY session (READ FIRST)** |
 | [PRD Template](./docs/PRD.md) | Product Requirements Document template | Phase 0 planning, before using planner |
 | [Agent Deployment](./docs/agent-deployment.md) | Multi-agent team structures and coordination | Project setup, team coordination |
 | [Project Management](./docs/project-management.md) | Phase-based planning and execution | Planning, tracking, delivery |
