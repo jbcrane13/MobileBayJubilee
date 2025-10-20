@@ -12,6 +12,7 @@
 		25FFBA792EA46BCA0066A6F6 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA782EA46BCA0066A6F6 /* FirebaseMessaging */; };
 		25FFBA7B2EA46BCA0066A6F6 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA7A2EA46BCA0066A6F6 /* FirebaseStorage */; };
 		25FFBA812EA48A8E0066A6F6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 25FFBA802EA48A8E0066A6F6 /* GoogleService-Info.plist */; };
+		25FFBAA02EA5F5AA0066A6F6 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 25FFBA9F2EA5F5AA0066A6F6 /* FirebaseDatabase */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +62,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25FFBAA02EA5F5AA0066A6F6 /* FirebaseDatabase in Frameworks */,
 				25FFBA792EA46BCA0066A6F6 /* FirebaseMessaging in Frameworks */,
 				25FFBA7B2EA46BCA0066A6F6 /* FirebaseStorage in Frameworks */,
 				25FFBA752EA46BCA0066A6F6 /* FirebaseAuth in Frameworks */,
@@ -130,6 +132,7 @@
 				25FFBA762EA46BCA0066A6F6 /* FirebaseFirestore */,
 				25FFBA782EA46BCA0066A6F6 /* FirebaseMessaging */,
 				25FFBA7A2EA46BCA0066A6F6 /* FirebaseStorage */,
+				25FFBA9F2EA5F5AA0066A6F6 /* FirebaseDatabase */,
 			);
 			productName = MobileBayJubilee;
 			productReference = 25FFBA0D2EA382840066A6F6 /* MobileBayJubilee.app */;
@@ -426,6 +429,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mobile Bay Jubilee";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to verify jubilee reports near you and show nearby jubilee activity on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -462,6 +466,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Mobile Bay Jubilee";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to verify jubilee reports near you and show nearby jubilee activity on the map.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -644,6 +649,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		25FFBA9F2EA5F5AA0066A6F6 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25FFBA732EA46BCA0066A6F6 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

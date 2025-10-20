@@ -230,7 +230,7 @@ class RealFirebaseService: FirebaseServiceProtocol {
         try await db.collection("reports").addDocument(data: reportData)
     }
 
-    func verifyReport(reportId: UUID, userId: UUID, isPositive: Bool) async throws {
+    func verifyReport(reportId: UUID, isPositive: Bool) async throws {
         guard let currentUserId = auth.currentUser?.uid else {
             throw FirebaseError.unauthorized
         }
@@ -282,17 +282,6 @@ class RealFirebaseService: FirebaseServiceProtocol {
         ])
     }
 
-    /// Check if user is within specified radius of report location (in miles)
-    func isUserNearReport(reportLocation: CLLocationCoordinate2D, userLocation: CLLocationCoordinate2D, radiusMiles: Double = 2.0) -> Bool {
-        let reportCLLocation = CLLocation(latitude: reportLocation.latitude, longitude: reportLocation.longitude)
-        let userCLLocation = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
-
-        let distanceMeters = userCLLocation.distance(from: reportCLLocation)
-        let distanceMiles = distanceMeters / 1609.34 // Convert meters to miles
-
-        return distanceMiles <= radiusMiles
-    }
-
     // MARK: - User Management
 
     func fetchCurrentUser() async throws -> User? {
@@ -323,7 +312,9 @@ class RealFirebaseService: FirebaseServiceProtocol {
                                uuidBytes[6], uuidBytes[7],
                                uuidBytes[8], uuidBytes[9],
                                uuidBytes[10], uuidBytes[11], uuidBytes[12], uuidBytes[13], uuidBytes[14], uuidBytes[15])
-        let deterministicUUID = UUID(uuidString: uuidString) ?? UUID()
+        guard let deterministicUUID = UUID(uuidString: uuidString) else {
+            fatalError("Could not create deterministic UUID from user UID: \(userId). This should never happen.")
+        }
         return firestoreUser.toUser(id: deterministicUUID)
     }
 
@@ -435,64 +426,5 @@ class RealFirebaseService: FirebaseServiceProtocol {
     func stopObservingChatMessages(roomId: String) {
         // TODO: Implement when Firebase Realtime Database is added
         print("💬 Stopped observing chat messages (stub) for room: \(roomId)")
-    }
-}
-
-// MARK: - Firebase Errors Extension
-
-extension FirebaseError {
-    static let duplicateVerification = FirebaseError.custom("You have already verified this report")
-
-    static func custom(_ message: String) -> FirebaseError {
-        return FirebaseError.noData // Placeholder; extend enum if needed
-    }
-}
-
-// MARK: - Helper Extensions
-
-extension JubileeReport {
-    /// Convert SwiftData model to Firestore dictionary
-    func toFirestoreData(userId: String) -> [String: Any] {
-        return [
-            "reportType": reportType.rawValue,
-            "latitude": latitude,
-            "longitude": longitude,
-            "locationName": locationName,
-            "intensity": intensity.rawValue,
-            "species": species,
-            "reportDescription": reportDescription ?? "",
-            "reportedAt": Timestamp(date: reportedAt),
-            "createdAt": Timestamp(date: createdAt),
-            "reportedBy": userId,
-            "verifications": verifications,
-            "isVerified": isVerified,
-            "photoURLs": photoURLs
-        ]
-    }
-}
-
-extension ConditionData {
-    /// Convert SwiftData model to Firestore dictionary
-    func toFirestoreData() -> [String: Any] {
-        return [
-            "score": score,
-            "seasonalScore": seasonalScore,
-            "timeWindowScore": timeWindowScore,
-            "windScore": windScore,
-            "tideScore": tideScore,
-            "weatherPatternScore": weatherPatternScore,
-            "waterQualityScore": waterQualityScore,
-            "windSpeed": windSpeed,
-            "windDirection": windDirection,
-            "temperature": temperature,
-            "tide": tide.rawValue,
-            "nextHighTide": nextHighTide != nil ? Timestamp(date: nextHighTide!) : NSNull(),
-            "nextLowTide": nextLowTide != nil ? Timestamp(date: nextLowTide!) : NSNull(),
-            "salinity": salinity ?? NSNull(),
-            "waterTemperature": waterTemperature ?? NSNull(),
-            "dissolvedOxygen": dissolvedOxygen ?? NSNull(),
-            "alertLevel": alertLevel.rawValue,
-            "fetchedAt": Timestamp(date: fetchedAt)
-        ]
     }
 }

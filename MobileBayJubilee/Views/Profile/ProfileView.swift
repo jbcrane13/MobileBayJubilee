@@ -10,7 +10,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct ProfileView: View {
-    @StateObject private var authManager = AuthenticationManager.shared
+    @ObservedObject private var authManager = AuthenticationManager.shared
     @State private var notificationsEnabled = true
     @State private var notificationThreshold = 70.0
     @State private var showingSettings = false
@@ -57,7 +57,7 @@ struct ProfileView: View {
 
 struct SignedInProfileView: View {
     @ObservedObject var authManager: AuthenticationManager
-    @StateObject private var reputationManager = ReputationManager.shared
+    @ObservedObject private var reputationManager = ReputationManager.shared
     @Binding var notificationsEnabled: Bool
     @Binding var notificationThreshold: Double
 
@@ -211,6 +211,11 @@ struct SignedInProfileView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
+            }
+        }
+        .onAppear {
+            Task {
+                await reputationManager.loadCurrentUserReputation()
             }
         }
     }

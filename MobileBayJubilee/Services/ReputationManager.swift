@@ -32,10 +32,7 @@ class ReputationManager: ObservableObject {
     private let db = Firestore.firestore()
 
     private init() {
-        // Initialize with current user's reputation
-        Task {
-            await loadCurrentUserReputation()
-        }
+        // Initialize empty - call loadCurrentUserReputation() explicitly from views
     }
 
     // MARK: - Reputation Calculation
@@ -84,9 +81,9 @@ class ReputationManager: ObservableObject {
     /// Update user reputation with the calculated change
     /// Ensures reputation stays within 0-100 range
     /// - Parameters:
-    ///   - userId: The UUID of the user
+    ///   - userId: The Firebase Auth UID of the user (String)
     ///   - change: The reputation points to add or subtract
-    func updateUserReputation(userId: UUID, change: Int) async throws {
+    func updateUserReputation(userId: String, change: Int) async throws {
         guard let currentUser = Auth.auth().currentUser else {
             throw ReputationError.userNotAuthenticated
         }
@@ -116,7 +113,7 @@ class ReputationManager: ObservableObject {
                 ])
 
             // Update local state if this is the current user
-            if currentUser.uid == userId.uuidString {
+            if currentUser.uid == userId {
                 self.currentUserReputation = newReputation
                 self.currentUserBadge = getReputationBadge(for: newReputation)
             }
@@ -177,7 +174,8 @@ class ReputationManager: ObservableObject {
     // MARK: - Load Current User Reputation
 
     /// Load the current user's reputation from Firestore
-    private func loadCurrentUserReputation() async {
+    /// Call this explicitly from views (e.g., in onAppear)
+    func loadCurrentUserReputation() async {
         guard let currentUser = Auth.auth().currentUser else {
             return
         }
@@ -199,12 +197,12 @@ class ReputationManager: ObservableObject {
     // MARK: - Fetch User Reputation
 
     /// Fetch reputation for any user by ID
-    /// - Parameter userId: The UUID of the user
+    /// - Parameter userId: The Firebase Auth UID of the user (String)
     /// - Returns: The user's current reputation score
-    func fetchUserReputation(userId: UUID) async throws -> Int {
+    func fetchUserReputation(userId: String) async throws -> Int {
         do {
             let userDoc = try await db.collection("users")
-                .document(userId.uuidString)
+                .document(userId)
                 .getDocument()
 
             guard let reputation = userDoc.data()?["reputation"] as? Int else {

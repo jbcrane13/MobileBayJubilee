@@ -22,7 +22,7 @@ protocol FirebaseServiceProtocol {
     func fetchRecentReports(limit: Int) async throws -> [JubileeReport]
     func fetchAllReports() async throws -> [JubileeReport]
     func submitReport(_ report: JubileeReport) async throws
-    func verifyReport(reportId: UUID, userId: UUID, isPositive: Bool) async throws
+    func verifyReport(reportId: UUID, isPositive: Bool) async throws
 
     // MARK: - User Management
     func fetchCurrentUser() async throws -> User?
@@ -80,10 +80,10 @@ class MockFirebaseService: FirebaseServiceProtocol {
         print("📝 Mock: Report submitted - \(report.reportType.rawValue) at \(report.locationName)")
     }
 
-    func verifyReport(reportId: UUID, userId: UUID, isPositive: Bool) async throws {
+    func verifyReport(reportId: UUID, isPositive: Bool) async throws {
         try? await Task.sleep(nanoseconds: 500_000_000)
         // TODO: In real implementation, increment verification count in Firestore
-        print("✅ Mock: Report \(isPositive ? "verified" : "disputed") - \(reportId) by user \(userId)")
+        print("✅ Mock: Report \(isPositive ? "verified" : "disputed") - \(reportId)")
     }
 
     // MARK: - User Management
@@ -218,6 +218,7 @@ enum FirebaseError: LocalizedError {
     case unauthorized
     case networkError
     case invalidData
+    case duplicateVerification
 
     var errorDescription: String? {
         switch self {
@@ -229,6 +230,8 @@ enum FirebaseError: LocalizedError {
             return "Network connection failed"
         case .invalidData:
             return "Invalid data format"
+        case .duplicateVerification:
+            return "You have already verified this report."
         }
     }
 }

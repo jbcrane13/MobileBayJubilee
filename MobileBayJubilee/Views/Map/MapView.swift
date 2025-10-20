@@ -9,13 +9,13 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import FirebaseAuth
 
 struct MapView: View {
     // TODO: Replace with @Query from SwiftData when Firebase integration complete
     @State private var reports: [JubileeReport] = JubileeReport.mockReports
     @State private var selectedReport: JubileeReport?
     @State private var showReportDetail = false
-    @State private var userLocation: CLLocationCoordinate2D?
     @State private var showVerificationAlert = false
     @State private var verificationMessage = ""
     @State private var isVerifying = false
@@ -26,8 +26,8 @@ struct MapView: View {
         )
     )
 
+    @ObservedObject private var locationService = LocationService.shared
     private let firebaseService = RealFirebaseService.shared
-    private let locationManager = CLLocationManager()
 
     var body: some View {
         NavigationStack {
@@ -60,7 +60,7 @@ struct MapView: View {
                 if showReportDetail, let report = selectedReport {
                     ReportDetailCard(
                         report: report,
-                        userLocation: userLocation,
+                        userLocation: locationService.userLocation,
                         onClose: {
                             showReportDetail = false
                             selectedReport = nil
@@ -124,23 +124,21 @@ struct MapView: View {
     // MARK: - Methods
 
     private func requestLocationPermission() {
-        locationManager.requestWhenInUseAuthorization()
-        if let location = locationManager.location {
-            userLocation = location.coordinate
-        }
+        locationService.requestPermission()
     }
 
     private func verifyReport(_ report: JubileeReport, isPositive: Bool) {
-        guard let userLoc = userLocation else {
+        guard let userLoc = locationService.getCLLocation() else {
             verificationMessage = "Unable to determine your location. Please enable location services."
             showVerificationAlert = true
             return
         }
 
         let reportCoordinate = CLLocationCoordinate2D(latitude: report.latitude, longitude: report.longitude)
+        let distance = userLoc.distanceInMiles(from: reportCoordinate)
 
         // Check if user is within 2 miles
-        guard firebaseService.isUserNearReport(reportLocation: reportCoordinate, userLocation: userLoc, radiusMiles: 2.0) else {
+        guard distance <= 2.0 else {
             verificationMessage = "You must be within 2 miles of the report location to verify it."
             showVerificationAlert = true
             return
@@ -151,9 +149,16 @@ struct MapView: View {
 
         Task {
             do {
-                // Mock user ID - in production, get from Auth
-                let userId = UUID()
-                try await firebaseService.verifyReport(reportId: report.id, userId: userId, isPositive: isPositive)
+                // Verify user is signed in (verifyReport will check internally)
+                guard AuthenticationManager.shared.user != nil else {
+                    await MainActor.run {
+                        isVerifying = false
+                        verificationMessage = "You must be signed in to verify reports."
+                        showVerificationAlert = true
+                    }
+                    return
+                }
+                try await firebaseService.verifyReport(reportId: report.id, isPositive: isPositive)
 
                 await MainActor.run {
                     isVerifying = false
@@ -245,9 +250,11 @@ struct ReportDetailCard: View {
     let onVerify: (Bool) -> Void
 
     private var isWithinVerificationRange: Bool {
-        guard let userLoc = userLocation else { return false }
-        let reportLoc = CLLocationCoordinate2D(latitude: report.latitude, longitude: report.longitude)
-        return RealFirebaseService.shared.isUserNearReport(reportLocation: reportLoc, userLocation: userLoc, radiusMiles: 2.0)
+        guard let userCoord = userLocation else { return false }
+        let userCLLocation = CLLocation(latitude: userCoord.latitude, longitude: userCoord.longitude)
+        let reportCoord = CLLocationCoordinate2D(latitude: report.latitude, longitude: report.longitude)
+
+        return userCLLocation.distanceInMiles(from: reportCoord) <= 2.0
     }
 
     var body: some View {
