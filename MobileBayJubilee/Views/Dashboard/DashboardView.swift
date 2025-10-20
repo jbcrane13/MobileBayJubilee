@@ -9,11 +9,13 @@
 import SwiftUI
 
 struct DashboardView: View {
-    // TODO: Replace with @Query from SwiftData when Firebase integration complete
     @State private var conditionData: ConditionData = .mockCurrent
     @State private var recentReports: [JubileeReport] = JubileeReport.mockReports.prefix(3).map { $0 }
     @State private var isRefreshing = false
     @State private var showReportSubmission = false
+
+    private let conditionScoreService = ConditionScoreService.shared
+    private let firebaseService = RealFirebaseService.shared
 
     var body: some View {
         NavigationStack {
@@ -88,34 +90,95 @@ struct DashboardView: View {
     private func refreshData() async {
         isRefreshing = true
 
-        // Simulate API call delay
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        // Try to fetch from Firebase first
+        if let latestCondition = try? await firebaseService.fetchCurrentCondition() {
+            conditionData = latestCondition
 
-        // TODO: Replace with real Firebase fetch
-        // For now, randomly vary the score to show animation
-        let newScore = Int.random(in: 65...85)
-        conditionData = ConditionData(
-            score: newScore,
-            seasonalScore: 20,
-            timeWindowScore: Int.random(in: 10...20),
-            windScore: Int.random(in: 8...15),
-            tideScore: Int.random(in: 15...20),
-            weatherPatternScore: Int.random(in: 5...10),
-            waterQualityScore: 2,
-            windSpeed: Double.random(in: 2.0...5.0),
-            windDirection: ["N", "NE", "E", "NW"].randomElement()!,
-            temperature: Double.random(in: 76...82),
-            tide: TidePhase.allCases.randomElement()!,
-            nextHighTide: Date().addingTimeInterval(6 * 3600),
-            nextLowTide: Date().addingTimeInterval(-2 * 3600),
-            salinity: Double.random(in: 10...15),
-            waterTemperature: Double.random(in: 80...85),
-            dissolvedOxygen: Double.random(in: 6.0...7.5),
-            alertLevel: newScore >= 80 ? .confirmed : (newScore >= 70 ? .watch : .none),
-            fetchedAt: Date()
-        )
+            // Also fetch latest reports
+            if let latestReports = try? await firebaseService.fetchRecentReports(limit: 3) {
+                recentReports = latestReports
+            }
+        } else {
+            // Fallback: Generate mock environmental data and calculate real score
+            let mockEnvData = generateMockEnvironmentalData()
+
+            // Calculate real condition score using ConditionScoreService
+            conditionData = conditionScoreService.calculateConditionScore(
+                date: Date(),
+                windSpeed: mockEnvData.windSpeed,
+                windDirection: mockEnvData.windDirection,
+                tide: mockEnvData.tide,
+                nextHighTide: mockEnvData.nextHighTide,
+                nextLowTide: mockEnvData.nextLowTide,
+                waterTemperature: mockEnvData.waterTemperature,
+                weatherPattern: mockEnvData.weatherPattern,
+                salinity: mockEnvData.salinity,
+                airTemperature: mockEnvData.airTemperature
+            )
+        }
 
         isRefreshing = false
+    }
+
+    /// Generate realistic mock environmental data for development
+    private func generateMockEnvironmentalData() -> (
+        windSpeed: Double,
+        windDirection: String,
+        tide: TidePhase,
+        nextHighTide: Date,
+        nextLowTide: Date,
+        waterTemperature: Double,
+        weatherPattern: WeatherPattern,
+        salinity: Double,
+        airTemperature: Double
+    ) {
+        let now = Date()
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: now)
+
+        // Simulate favorable conditions more often during optimal hours
+        let isOptimalTime = (hour >= 21 || hour < 8)
+
+        // Wind: More favorable (E, SE, NE) during optimal times
+        let favorableDirections = ["E", "SE", "NE", "ESE"]
+        let unfavorableDirections = ["N", "NW", "S"]
+        let windDirection = isOptimalTime ?
+            favorableDirections.randomElement()! :
+            (Bool.random() ? favorableDirections : unfavorableDirections).randomElement()!
+
+        // Wind speed: 2-8 mph is optimal
+        let windSpeed = Double.random(in: 1.0...4.0) // m/s (~2-9 mph)
+
+        // Tide: Rising tide is optimal
+        let tide: TidePhase = Bool.random() ? .rising : .falling
+
+        // Next tides (6 hours apart typically)
+        let nextHighTide = now.addingTimeInterval(Double.random(in: 2...10) * 3600)
+        let nextLowTide = now.addingTimeInterval(Double.random(in: 1...5) * 3600)
+
+        // Water temperature: 26-30°C (79-86°F) is optimal
+        let waterTemperature = Double.random(in: 26.0...30.0)
+
+        // Weather pattern
+        let weatherPattern: WeatherPattern = [.clear, .partlyCloudy, .overcast].randomElement()!
+
+        // Salinity: 10-15 PSU is optimal (low salinity zone)
+        let salinity = Double.random(in: 10.0...15.0)
+
+        // Air temperature: ~28°C (82°F)
+        let airTemperature = Double.random(in: 26.0...32.0)
+
+        return (
+            windSpeed: windSpeed,
+            windDirection: windDirection,
+            tide: tide,
+            nextHighTide: nextHighTide,
+            nextLowTide: nextLowTide,
+            waterTemperature: waterTemperature,
+            weatherPattern: weatherPattern,
+            salinity: salinity,
+            airTemperature: airTemperature
+        )
     }
 
     private var relativeTimeFormatter: RelativeDateTimeFormatter {
